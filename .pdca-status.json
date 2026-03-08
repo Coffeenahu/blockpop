@@ -1,0 +1,36 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-03-08T12:50:00.000Z",
+  "activeFeatures": ["block-pop"],
+  "primaryFeature": "block-pop",
+  "features": {
+    "block-pop": {
+      "name": "block-pop",
+      "status": "analyze",
+      "tasks": [
+        { "id": "1", "title": "[Plan] block-pop", "status": "completed" },
+        { "id": "2", "title": "[Design] block-pop", "status": "completed", "blockedBy": "1" },
+        { "id": "3", "title": "[Do] block-pop", "status": "completed", "blockedBy": "2" },
+        { "id": "4", "title": "[Check] block-pop", "status": "completed", "blockedBy": "3" }
+      ],
+      "phases": {
+        "plan": "completed",
+        "design": "completed",
+        "do": "completed",
+        "check": "completed",
+        "act": "pending"
+      }
+    }
+  },
+  "pipeline": {
+    "currentPhase": 4,
+    "level": "Starter",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-03-08T12:36:26.990Z",
+    "onboardingCompleted": true,
+    "lastActivity": "2026-03-08T12:50:00.000Z"
+  },
+  "history": []
+}
