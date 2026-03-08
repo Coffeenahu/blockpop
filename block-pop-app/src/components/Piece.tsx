@@ -9,9 +9,15 @@ interface PieceProps {
 const Piece: React.FC<PieceProps> = ({ piece, onDragStart }) => {
   const dragOffsetRef = useRef<[number, number]>([0, 0]);
 
+  const getPieceCellSize = () => {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--piece-cell-size').trim();
+    return parseFloat(raw) || 30;
+  };
+
   const handleDragStart = useCallback((e: React.DragEvent) => {
     const [offsetRow, offsetCol] = dragOffsetRef.current;
-    const cellSize = 30;
+    const cellSize = getPieceCellSize();
     const gap = 2;
     const step = cellSize + gap;
     const cols = piece.shape[0].length;
@@ -49,7 +55,7 @@ const Piece: React.FC<PieceProps> = ({ piece, onDragStart }) => {
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     const rect = e.currentTarget.getBoundingClientRect();
-    const step = 32; // 30px cell + 2px gap
+    const step = getPieceCellSize() + 2;
     const offsetCol = Math.max(0, Math.floor((touch.clientX - rect.left) / step));
     const offsetRow = Math.max(0, Math.floor((touch.clientY - rect.top) / step));
     dragOffsetRef.current = [offsetRow, offsetCol];

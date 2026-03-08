@@ -1,5 +1,8 @@
 :root {
-  --cell-size: 45px;
+  /* 8셀 + 7gap(4px) + 2padding(4px) + 양쪽여백(16px) = 52px 오버헤드 */
+  --cell-size: min(45px, calc((100vw - 52px) / 8));
+  --piece-cell-size: min(30px, calc(var(--cell-size) * 0.67));
+  --grid-total: calc(8 * var(--cell-size) + 7 * 4px + 2 * 4px);
   --bg-color: #1a1a1a;
   --grid-bg: #2d2d2d;
 }
@@ -8,8 +11,8 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
-  min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background-color: var(--bg-color);
   color: white;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -19,8 +22,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
+  padding: 16px 8px;
+  box-sizing: border-box;
 }
 
 .header {
@@ -93,13 +98,13 @@ body {
 .pieces-container {
   display: flex;
   justify-content: center;
-  gap: 40px;
-  min-height: 150px;
-  padding: 20px;
+  align-items: center;
+  gap: 20px;
+  min-height: 120px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  width: 100%;
-  max-width: 440px;
+  width: var(--grid-total);
   box-sizing: border-box;
 }
 
@@ -122,8 +127,8 @@ body {
 }
 
 .piece-cell {
-  width: 30px;
-  height: 30px;
+  width: var(--piece-cell-size);
+  height: var(--piece-cell-size);
   border-radius: 2px;
 }
 
@@ -143,8 +148,8 @@ body {
 }
 
 .floating-piece-cell {
-  width: 30px;
-  height: 30px;
+  width: var(--piece-cell-size);
+  height: var(--piece-cell-size);
   border-radius: 2px;
 }
 

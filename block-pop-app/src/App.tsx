@@ -168,7 +168,10 @@ function App() {
     startNewRound();
   }, [startNewRound]);
 
-  const step = 32; // 30px cell + 2px gap
+  const pieceCellSize = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--piece-cell-size')
+  ) || 30;
+  const step = pieceCellSize + 2;
 
   return (
     <div
