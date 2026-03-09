@@ -1,24 +1,38 @@
 # Block Pop 갭 분석 (Gap Analysis)
 
-> Version: 1.0.0 | Created: 2026-03-08
+> Version: 2.0.0 | Created: 2026-03-08 | Updated: 2026-03-09
 
-## Match Rate: 85%
+## Match Rate: 95%
 
 ## 갭 요약 (Gap Summary)
 | 카테고리 | 설계 (Design) | 구현 (Implementation) | 상태 |
 |----------|--------|----------------|--------|
-| 아키텍처 | 5개 계층 컴포넌트 구조 | App 중심 단일 컴포넌트(일부 로직 분리) | 부분 일치 |
-| 데이터 모델 | CellState, GridData, PieceShape 정의 | 설계와 동일하게 구현됨 | 일치 |
-| 게임 로직 | 배치, 제거, 종료 판정, 점수 | 설계와 동일하게 구현됨 | 일치 |
-| UI/UX | 8x8 그리드, 네온 컬러 | 설계와 동일하게 구현됨 | 일치 |
-| 애니메이션 | "Pop" 애니메이션 (CSS Keyframes) | 기본 배경색 변경만 적용됨 | 미흡 |
+| 아키텍처 | App + 3 hooks + 4 components | 설계와 동일 | 일치 |
+| 데이터 모델 | CellState, GridData, PieceShape, VisualEffect | 설계와 동일 | 일치 |
+| 게임 상수 | 10개 상수 정의 | constants.ts에 모두 구현 | 일치 |
+| 게임 로직 | 배치, 제거, 종료, 점수, 콤보, 난이도 | 설계와 동일 | 일치 |
+| 콤보 시스템 | grace 3턴, 배수 0.5 step | useCombo 훅으로 구현 | 일치 |
+| 난이도 시스템 | 3단계 가중치 | utils.ts에 구현 | 일치 |
+| 시각 효과 | Pop, 점수팝업, 파티클, screen-shake | useVisualEffects 훅 + CSS | 일치 |
+| 고정 슬롯 | (PieceShape \| null)[] 3칸 | 설계와 동일 | 일치 |
+| 반응형 | 100dvh, clamp, min() | 설계와 동일 | 일치 |
+| 드래그 앤 드롭 | Desktop + Mobile touch | 설계와 동일 | 일치 |
+| 테스트 | 9개 테스트 케이스 정의 | 미구현 | 미흡 |
 
-## 주요 갭 (Critical Gaps)
-1. **컴포넌트 분리**: 설계에서는 `GameBoard`, `Grid`, `PieceContainer`, `Piece` 등으로 세분화하여 설계했으나, 현재 구현은 `App.tsx` 내에서 대부분의 렌더링이 이루어지고 있습니다. 유지보수를 위해 컴포넌트 분리가 필요합니다.
-2. **시각 효과(애니메이션)**: 설계의 핵심인 "Pop" 애니메이션 효과가 현재는 단순 색상 변경 및 제거로만 구현되어 있어 미적 완성도가 설계 대비 낮습니다.
-3. **테스트 계획 검증**: 설계된 테스트 케이스 중 "배치 가능 공간 없음(Game Over)" 팝업 및 재시작 기능은 구현되었으나, 드래그 앤 드롭의 사용자 경험(드래그 중인 블록의 그림자 등)이 설계 사양에 비해 단순합니다.
+## 이전 분석 대비 개선 (v1.0 → v2.0)
+
+### 해결된 갭
+1. **매직 넘버 제거** — 콤보, 점수, 난이도, 파티클 관련 상수를 `constants.ts`로 이동
+2. **God component 분리** — App.tsx에서 useCombo, useVisualEffects, useCellCoordinates 커스텀 훅으로 로직 분리
+3. **중복 CSS 규칙** — `.cell.preview` 중복 정의를 하나로 통합
+4. **@ts-ignore 제거** — `as React.CSSProperties` 캐스팅으로 교체
+5. **getComputedStyle 캐싱** — useCellCoordinates 훅에서 resize 이벤트 기반 캐싱
+6. **placeableStatus 최적화** — useMemo로 감싸서 불필요한 재계산 방지
+7. **설계 문서 갱신** — Beta 2 이후 추가 기능 전체 반영 (v2.0.0)
+
+### 남은 갭
+1. **테스트 커버리지 0%** — utils.ts의 순수 함수에 대한 단위 테스트 미작성
 
 ## 권장 사항 (Recommendations)
-1. **컴포넌트 리팩토링**: `App.tsx`의 렌더링 로직을 설계된 구조(`Grid`, `PieceContainer`, `Piece`)로 컴포넌트화하여 분리합니다.
-2. **애니메이션 추가**: CSS Keyframes를 사용하여 줄 제거 시 블록이 터지거나 작아지는 애니메이션을 추가하여 게임의 생동감을 높입니다.
-3. **드래그 경험 개선**: 드래그 중인 블록이 그리드 위에 있을 때 미리보기(Preview)를 보여주는 기능을 추가하면 사용자 경험이 크게 향상될 것입니다.
+1. **단위 테스트 추가**: utils.ts의 canPlacePiece, checkLines, isGameOver, generateRandomPiece에 테스트 작성
+2. **Grace 표시 상수화**: combo-grace의 ★☆ 반복 횟수가 App.tsx에서 하드코딩(3)되어 있음 → COMBO_GRACE_TURNS 참조로 변경 가능
