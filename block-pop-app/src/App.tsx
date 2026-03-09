@@ -22,15 +22,13 @@ import { useVisualEffects } from './hooks/useVisualEffects';
 import { useCellCoordinates } from './hooks/useCellCoordinates';
 
 const initialPieces = (grid: GridData, score: number): (PieceShape | null)[] => {
-  let pieces: PieceShape[] = [];
+  let pieces: (PieceShape | null)[] = [];
   let isAnyPlaceable = false;
-  
-  // 적어도 하나는 배치 가능한 블록이 나올 때까지 반복 (무한 루프 방지를 위해 최대 10회 시도)
   let attempts = 0;
-  while (!isAnyPlaceable && attempts < 10) {
+  while (!isAnyPlaceable && attempts < 15) {
     pieces = [generateRandomPiece(score), generateRandomPiece(score), generateRandomPiece(score)];
     isAnyPlaceable = pieces.some(p => {
-      // 그리드 전체를 돌며 배치 가능한 곳이 있는지 확인
+      if (!p) return false;
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           if (canPlacePiece(grid, p, r, c)) return true;
@@ -55,6 +53,7 @@ function App() {
   const [shuffleCharges, setShuffleCharges] = useState(1);
   const [lastChargeScore, setLastChargeScore] = useState(0);
   const [lastShuffleScore, setLastShuffleScore] = useState(0);
+  const [isRotateMode, setIsRotateMode] = useState(false);
 
   const [gameOver, setGameOver] = useState(false);
   const [draggedPiece, setDraggedPiece] = useState<PieceShape | null>(null);
@@ -67,10 +66,7 @@ function App() {
   const { visualEffects, addEffect } = useVisualEffects();
   const { gridRef, getCellCoordinates, getPieceCellSize } = useCellCoordinates();
 
-  // 초기 피스 생성
-  useEffect(() => {
-    setCurrentPieces(initialPieces(grid, 0));
-  }, []);
+  useEffect(() => { setCurrentPieces(initialPieces(grid, 0)); }, []);
 
   useEffect(() => {
     const savedBest = localStorage.getItem('block-pop-best-score');
@@ -84,7 +80,6 @@ function App() {
     }
   }, [score, bestScore]);
 
-  // 전략적 도구 충전 로직 (Rotate/Shuffle 모두 2000점마다)
   useEffect(() => {
     if (score - lastChargeScore >= 2000) {
       setRotateCharges(prev => Math.min(prev + 1, 3));
@@ -101,13 +96,35 @@ function App() {
   }, []);
 
   const isAnimating = grid.some((row) => row.some((cell) => cell.pop));
+
+  /** 게임오버 판정 유예 상태 (마지막 블록이 배치 불가하지만 Hold가 비어있을 때) */
+  const isHoldAvailableGuide = useMemo(() => {
+    if (heldPiece !== null) return false;
+    const activePieces = currentPieces.filter((p): p is PieceShape => p !== null);
+    if (activePieces.length !== 1) return false;
+    
+    // 마지막 1개 남은 피스가 배치 불가능한지 체크
+    return !activePieces.some(p => {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (canPlacePiece(grid, p, r, c)) return true;
+        }
+      }
+      return false;
+    });
+  }, [grid, currentPieces, heldPiece]);
+
   const computedGameOver = useMemo(() => {
     if (isAnimating || gameOver) return gameOver;
+    
+    // Hold 유도 상태라면 게임오버 판정 유예
+    if (isHoldAvailableGuide) return false;
+
     const piecesToCheck = [...currentPieces.filter((p): p is PieceShape => p !== null)];
     if (heldPiece) piecesToCheck.push(heldPiece);
     if (piecesToCheck.length > 0 && isGameOver(grid, piecesToCheck)) return true;
     return false;
-  }, [grid, currentPieces, heldPiece, isAnimating, gameOver]);
+  }, [grid, currentPieces, heldPiece, isAnimating, gameOver, isHoldAvailableGuide]);
 
   const handleDragEnter = useCallback(
     (row: number, col: number) => {
@@ -142,10 +159,7 @@ function App() {
         draggedPiece.shape.forEach((pieceRow, r) => {
           pieceRow.forEach((val, c) => {
             if (val === 1) {
-              newGrid[targetRow + r][targetCol + c] = {
-                filled: true,
-                color: draggedPiece.color,
-              };
+              newGrid[targetRow + r][targetCol + c] = { filled: true, color: draggedPiece.color };
             }
           });
         });
@@ -176,23 +190,14 @@ function App() {
             const coords = getCellCoordinates(r, c);
             const cellColor = newGrid[r][c].color || '#fff';
             for (let i = 0; i < PARTICLES_PER_CELL; i++) {
-              addEffect({
-                x: coords.x,
-                y: coords.y,
-                color: cellColor,
-                tx: `${(Math.random() - 0.5) * 150}px`,
-                ty: `${(Math.random() - 0.5) * 150}px`,
-                type: 'particle',
-              });
+              addEffect({ x: coords.x, y: coords.y, color: cellColor, tx: `${(Math.random() - 0.5) * 150}px`, ty: `${(Math.random() - 0.5) * 150}px`, type: 'particle' });
             }
           });
 
           setTimeout(() => {
             setGrid((currentGrid) => {
               const finalGrid = currentGrid.map((r) => r.map((c) => ({ ...c })));
-              popCells.forEach(([r, c]) => {
-                finalGrid[r][c] = { filled: false };
-              });
+              popCells.forEach(([r, c]) => { finalGrid[r][c] = { filled: false }; });
               return finalGrid;
             });
           }, POP_ANIMATION_MS);
@@ -207,9 +212,7 @@ function App() {
         else {
           const remaining = currentPieces.map((p) => (p?.id === draggedPiece.id ? null : p));
           setCurrentPieces(remaining);
-          if (remaining.every((p) => p === null)) {
-            setTimeout(() => startNewRound(latestScore, newGrid), 0);
-          }
+          if (remaining.every((p) => p === null)) setTimeout(() => startNewRound(latestScore, newGrid), 0);
         }
         setSwappedThisTurn(false);
       }
@@ -220,13 +223,22 @@ function App() {
   );
 
   const handlePointerDown = useCallback((e: React.PointerEvent, piece: PieceShape, offsetRow: number, offsetCol: number, isFromHold = false) => {
+    if (isRotateMode && rotateCharges > 0) {
+      if (isFromHold) setHeldPiece({ ...piece, shape: rotateMatrix(piece.shape) });
+      else setCurrentPieces(prev => prev.map(p => p?.id === piece.id ? { ...p, shape: rotateMatrix(p.shape) } : p));
+      setRotateCharges(prev => prev - 1);
+      setIsRotateMode(false);
+      return;
+    }
+
     setDraggedPiece(piece);
     setDragOffset([offsetRow, offsetCol]);
     setDraggedFromHold(isFromHold);
     setPointerPos({ x: e.clientX, y: e.clientY });
+    
     const container = document.querySelector('.game-container') as HTMLElement;
     if (container) container.setPointerCapture(e.pointerId);
-  }, []);
+  }, [isRotateMode, rotateCharges]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggedPiece) return;
@@ -246,10 +258,13 @@ function App() {
     const checkY = e.clientY - DRAG_LIFT_PX;
     const el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
     const holdSlot = el?.closest('.hold-slot') as HTMLElement | null;
+    
     if (holdSlot && !swappedThisTurn && !draggedFromHold) {
       const prevHeld = heldPiece;
       setHeldPiece(draggedPiece);
-      setCurrentPieces(prev => prev.map(p => p?.id === draggedPiece.id ? prevHeld : p));
+      const nextPieces = currentPieces.map(p => p?.id === draggedPiece.id ? prevHeld : p);
+      setCurrentPieces(nextPieces);
+      if (nextPieces.every(p => p === null)) setTimeout(() => startNewRound(score, grid), 0);
       setSwappedThisTurn(true);
       setDraggedPiece(null);
       setPreviewCells([]);
@@ -265,18 +280,7 @@ function App() {
       setDraggedFromHold(false);
     }
     setPointerPos(null);
-  }, [draggedPiece, handleDrop, heldPiece, swappedThisTurn, draggedFromHold]);
-
-  const handleRotate = useCallback((idx: number) => {
-    if (rotateCharges <= 0) return;
-    setCurrentPieces(prev => {
-      const next = [...prev];
-      const piece = next[idx];
-      if (piece) next[idx] = { ...piece, shape: rotateMatrix(piece.shape) };
-      return next;
-    });
-    setRotateCharges(prev => prev - 1);
-  }, [rotateCharges]);
+  }, [draggedPiece, handleDrop, heldPiece, swappedThisTurn, draggedFromHold, currentPieces, score, grid, startNewRound]);
 
   const handleShuffle = useCallback(() => {
     if (shuffleCharges <= 0) return;
@@ -296,6 +300,7 @@ function App() {
     setShuffleCharges(1);
     setLastChargeScore(0);
     setLastShuffleScore(0);
+    setIsRotateMode(false);
     setCurrentPieces(initialPieces(newGrid, 0));
   }, [resetCombo]);
 
@@ -319,13 +324,12 @@ function App() {
 
   return (
     <div
-      className={`game-container ${comboCount > 1 ? 'screen-shake' : ''}`}
+      className={`game-container ${comboCount > 1 ? 'screen-shake' : ''} ${isRotateMode ? 'rotate-mode-active' : ''} ${isHoldAvailableGuide ? 'hold-guide-active' : ''}`}
       key={comboCount}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
       <div className="header">
-        <h1>BLOCK POP</h1>
         <div className="score-container">
           <div className="score">Score: {score}</div>
           <div className="best-score">Best: {bestScore}</div>
@@ -349,9 +353,11 @@ function App() {
           heldPiecePlaceable={heldPiecePlaceable}
           rotateCharges={rotateCharges}
           shuffleCharges={shuffleCharges}
+          isRotateMode={isRotateMode}
+          isHoldAvailableGuide={isHoldAvailableGuide}
           onPointerDown={handlePointerDown}
-          onRotate={handleRotate}
           onShuffle={handleShuffle}
+          onToggleRotateMode={() => setIsRotateMode(!isRotateMode)}
           previewCells={previewCells}
           placeableStatus={placeableStatus}
           gridRef={gridRef}

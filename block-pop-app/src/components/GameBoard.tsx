@@ -12,13 +12,15 @@ interface GameBoardProps {
   heldPiecePlaceable: boolean;
   rotateCharges: number;
   shuffleCharges: number;
+  isRotateMode: boolean;
+  isHoldAvailableGuide: boolean;
   onPointerDown: (e: React.PointerEvent, piece: PieceShape, offsetRow: number, offsetCol: number, isFromHold?: boolean) => void;
-  onRotate: (idx: number) => void;
   onShuffle: () => void;
+  onToggleRotateMode: () => void;
   previewCells: [number, number][];
   placeableStatus: boolean[];
   gridRef: React.RefObject<HTMLDivElement | null>;
-  visualEffects: any[]; // 이펙트 데이터 추가
+  visualEffects: any[];
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -29,9 +31,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
   heldPiecePlaceable,
   rotateCharges,
   shuffleCharges,
+  isRotateMode,
+  isHoldAvailableGuide,
   onPointerDown,
-  onRotate,
   onShuffle,
+  onToggleRotateMode,
   previewCells,
   placeableStatus,
   gridRef,
@@ -39,32 +43,6 @@ const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   return (
     <div className="game-board-layout">
-      <div className="side-panel">
-        <div className="hold-container">
-          <div className="hold-label">HOLD</div>
-          <div className={`hold-slot ${swappedThisTurn ? 'used' : ''} ${!heldPiecePlaceable ? 'not-placeable' : ''}`}>
-            {heldPiece && (
-              <Piece
-                piece={heldPiece}
-                onPointerDown={(e, p, r, c) => onPointerDown(e, p, r, c, true)}
-                disabled={swappedThisTurn}
-              />
-            )}
-          </div>
-        </div>
-        
-        <div className="shuffle-container">
-          <button 
-            className="shuffle-btn" 
-            onClick={onShuffle} 
-            disabled={shuffleCharges <= 0}
-          >
-            🔄 SHUFFLE ({shuffleCharges})
-          </button>
-        </div>
-      </div>
-      
-      {/* 그리드와 이펙트를 묶는 상대 좌표 컨테이너 */}
       <div className="grid-relative-container" style={{ position: 'relative' }}>
         <Grid
           grid={grid}
@@ -95,13 +73,47 @@ const GameBoard: React.FC<GameBoardProps> = ({
         </div>
       </div>
       
-      <PieceContainer
-        currentPieces={currentPieces}
-        onPointerDown={onPointerDown}
-        onRotate={onRotate}
-        placeableStatus={placeableStatus}
-        rotateCharges={rotateCharges}
-      />
+      <div className="bottom-controls-container">
+        <PieceContainer
+          currentPieces={currentPieces}
+          onPointerDown={onPointerDown}
+          placeableStatus={placeableStatus}
+        />
+
+        <div className="action-buttons-row">
+          <div className={`hold-container ${isHoldAvailableGuide ? 'guide-highlight' : ''}`}>
+            <div className="hold-label">
+              {isHoldAvailableGuide ? 'MOVE TO HOLD!' : 'HOLD'}
+            </div>
+            <div className={`hold-slot ${swappedThisTurn ? 'used' : ''} ${!heldPiecePlaceable ? 'not-placeable' : ''}`}>
+              {heldPiece && (
+                <Piece
+                  piece={heldPiece}
+                  onPointerDown={(e, p, r, c) => onPointerDown(e, p, r, c, true)}
+                  disabled={swappedThisTurn}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="item-buttons-group">
+            <button 
+              className={`rotate-mode-btn ${isRotateMode ? 'active' : ''}`}
+              onClick={onToggleRotateMode}
+              disabled={rotateCharges <= 0}
+            >
+              ⟳ ROTATE ({rotateCharges})
+            </button>
+            <button 
+              className="shuffle-btn" 
+              onClick={onShuffle} 
+              disabled={shuffleCharges <= 0}
+            >
+              🔄 SHUFFLE ({shuffleCharges})
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
