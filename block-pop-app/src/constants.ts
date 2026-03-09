@@ -25,10 +25,18 @@ export const REVIVE_SCORE_THRESHOLD = 0.3; // 최고점의 30% 이상 달성 시
 export const REVIVE_SCORE_PENALTY = 0.7;   // 부활 시 현재 점수의 70%로 차감
 export const REVIVE_CLEAR_ROWS = 4;        // 부활 시 하단 N행 제거
 
-// Block color palette (fixed, used for all piece generation)
+// Block color palette (Monochrome Lime Palette for Khaki Theme)
 export const BLOCK_COLORS = [
-  '#FF5733','#33FF57','#3357FF','#FFBD33','#33FFF3',
-  '#F333FF','#FF33A1','#A133FF','#33FFBD','#FF3333',
+  '#cadf9e', // Primary Lime
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
+  '#cadf9e',
 ] as const;
 
 // Storage keys
