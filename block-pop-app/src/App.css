@@ -1,87 +1,74 @@
 :root {
-  /* 수직 오버헤드를 350px로 대폭 늘려 작은 화면에서 그리드를 더 작게 강제함 */
   --cell-size: min(42px, calc((100vw - 40px) / 8), calc((100dvh - 350px) / 8));
   --grid-total: calc(8 * var(--cell-size) + 7 * 4px + 2 * 4px);
-  /* 피스 셀 크기를 더 축소하여 공간 확보 */
   --piece-cell-size: min(20px, calc(var(--cell-size) * 0.55), calc((var(--grid-total) - 60px) / 15));
   --bg-color: #1a1a1a;
   --grid-bg: #2d2d2d;
 }
 
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  height: 100dvh;
-  overflow: hidden;
-  position: fixed;
-  touch-action: none;
-  background-color: var(--bg-color);
-  color: white;
+  margin: 0; padding: 0; width: 100%; height: 100%; height: 100dvh;
+  overflow: hidden; position: fixed; touch-action: none;
+  background-color: var(--bg-color); color: white;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px; /* 간격 최소화 */
-  width: 100%;
-  max-width: 500px;
-  height: 100%;
-  height: 100dvh;
-  padding: 5px 10px; /* 패딩 최소화 */
-  box-sizing: border-box;
-  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; width: 100%; max-width: 500px; height: 100%; height: 100dvh;
+  padding: 5px 10px; box-sizing: border-box; position: relative;
 }
 
-.header {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* [복구] 콤보 시 화면 흔들림 효과 */
+.screen-shake {
+  animation: shake 0.2s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 3px); }
+  50% { transform: translate(3px, -3px); }
+  75% { transform: translate(-3px, -3px); }
+}
+
+.game-container.rotate-mode-active {
+  background-color: rgba(51, 87, 255, 0.1);
 }
 
 .score-container {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-bottom: 0;
+  display: flex; gap: 12px; justify-content: center; margin-bottom: 0;
 }
 .score { font-size: min(1rem, 3.5vw); font-weight: bold; }
 .best-score { font-size: min(1rem, 3.5vw); font-weight: bold; color: #ffcc00; }
 
 .combo-container { height: 24px; display: flex; flex-direction: column; align-items: center; }
+
+/* [복구] 콤보 텍스트 팝업 애니메이션 */
 .combo-text { 
-  font-size: 1rem; 
-  font-weight: 900; 
-  color: #ffcc00; 
-  text-shadow: 1px 1px 0px #000;
-  line-height: 1;
+  font-size: 1rem; font-weight: 900; color: #ffcc00; 
+  text-shadow: 1px 1px 0px #000; line-height: 1;
+  animation: combo-pop 0.3s ease-out;
 }
+
+@keyframes combo-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .combo-grace { font-size: 0.65rem; color: #aaa; }
 
 .game-board-layout {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px; /* 간격 최소화 */
-  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;
 }
 
 .grid-relative-container {
-  background-color: #3d3d3d;
-  padding: 3px;
-  border-radius: 8px;
+  background-color: #3d3d3d; padding: 3px; border-radius: 8px;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(8, var(--cell-size));
-  grid-template-rows: repeat(8, var(--cell-size));
-  gap: 4px;
+  display: grid; grid-template-columns: repeat(8, var(--cell-size));
+  grid-template-rows: repeat(8, var(--cell-size)); gap: 4px;
 }
 
 .cell { width: var(--cell-size); height: var(--cell-size); background-color: var(--grid-bg); border-radius: 3px; }
@@ -90,89 +77,67 @@ html, body {
 .cell.pop { animation: pop-animation 0.4s ease-out forwards; }
 
 .bottom-controls-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  max-width: var(--grid-total);
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  display: flex; flex-direction: column; gap: 6px; width: 100%;
+  max-width: var(--grid-total); padding: 6px;
+  background: rgba(255, 255, 255, 0.05); border-radius: 10px;
 }
 
-.pieces-container {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-}
+.pieces-container { display: flex; justify-content: center; gap: 6px; width: 100%; }
 
 .piece-slot {
   width: calc(5 * var(--piece-cell-size) + 4 * 2px);
   height: calc(5 * var(--piece-cell-size) + 4 * 2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.2);
-  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.2); border-radius: 5px;
 }
 
 .action-buttons-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
+  display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%;
 }
 
-.hold-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
+.hold-container { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .hold-label { font-size: 0.55rem; font-weight: bold; color: #888; }
 .hold-slot {
   width: calc(4 * var(--piece-cell-size) + 3 * 2px + 4px);
   height: calc(4 * var(--piece-cell-size) + 3 * 2px + 4px);
-  border: 1.5px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 1.5px dashed rgba(255, 255, 255, 0.2); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
 }
 .hold-slot.used { opacity: 0.4; background: rgba(255, 0, 0, 0.1); }
 .hold-slot.not-placeable { filter: grayscale(1); opacity: 0.3; }
 
 .hold-container.guide-highlight {
-  background: rgba(255, 204, 0, 0.1);
-  border-radius: 8px;
+  background: rgba(255, 204, 0, 0.15); border-radius: 8px;
+  animation: guide-pulse 1.5s infinite;
 }
 
-.item-buttons-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
+@keyframes guide-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
 }
+
+.item-buttons-group { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 
 .rotate-mode-btn, .shuffle-btn {
-  border: none;
-  border-radius: 6px;
-  padding: 5px;
-  font-weight: 900;
-  cursor: pointer;
-  font-size: 0.7rem;
-  transition: all 0.2s;
+  border: none; border-radius: 6px; padding: 5px; font-weight: 900;
+  cursor: pointer; font-size: 0.7rem; transition: all 0.2s;
   box-shadow: 0 2px 0 rgba(0,0,0,0.3);
 }
 
 .rotate-mode-btn { background: #3357FF; color: white; }
-.rotate-mode-btn.active { background: #ffcc00; color: black; }
+.rotate-mode-btn.active { 
+  background: #ffcc00; color: black; 
+  animation: mode-pulse 1s infinite;
+}
 .shuffle-btn { background: #33FFF3; color: black; }
 
 .rotate-mode-btn:disabled, .shuffle-btn:disabled {
   background: #444; color: #888; cursor: not-allowed; box-shadow: none;
+}
+
+@keyframes mode-pulse {
+  0%, 100% { background-color: #ffcc00; }
+  50% { background-color: #ffd633; }
 }
 
 .piece { display: flex; flex-direction: column; gap: 2px; cursor: grab; touch-action: none; }
@@ -181,25 +146,17 @@ html, body {
 .piece-cell { width: var(--piece-cell-size); height: var(--piece-cell-size); border-radius: 2px; }
 
 .floating-piece {
-  position: fixed;
-  pointer-events: none;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  transform: scale(1.2);
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
+  position: fixed; pointer-events: none; z-index: 10000;
+  display: flex; flex-direction: column; gap: 2px;
+  transform: scale(1.2); filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
 }
 .floating-piece-row { display: flex; gap: 2px; }
 .floating-piece-cell { width: var(--piece-cell-size); height: var(--piece-cell-size); border-radius: 2px; }
 
 .game-over {
-  position: fixed;
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.95);
-  padding: 20px; border-radius: 15px; text-align: center;
-  z-index: 11000; border: 2px solid #ffcc00;
-  width: 80%; max-width: 260px;
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 15px; text-align: center;
+  z-index: 11000; border: 2px solid #ffcc00; width: 80%; max-width: 260px;
 }
 
 .restart-btn {

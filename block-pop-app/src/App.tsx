@@ -97,13 +97,10 @@ function App() {
 
   const isAnimating = grid.some((row) => row.some((cell) => cell.pop));
 
-  /** 게임오버 판정 유예 상태 (마지막 블록이 배치 불가하지만 Hold가 비어있을 때) */
   const isHoldAvailableGuide = useMemo(() => {
     if (heldPiece !== null) return false;
     const activePieces = currentPieces.filter((p): p is PieceShape => p !== null);
     if (activePieces.length !== 1) return false;
-    
-    // 마지막 1개 남은 피스가 배치 불가능한지 체크
     return !activePieces.some(p => {
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
@@ -116,10 +113,7 @@ function App() {
 
   const computedGameOver = useMemo(() => {
     if (isAnimating || gameOver) return gameOver;
-    
-    // Hold 유도 상태라면 게임오버 판정 유예
     if (isHoldAvailableGuide) return false;
-
     const piecesToCheck = [...currentPieces.filter((p): p is PieceShape => p !== null)];
     if (heldPiece) piecesToCheck.push(heldPiece);
     if (piecesToCheck.length > 0 && isGameOver(grid, piecesToCheck)) return true;
@@ -222,6 +216,25 @@ function App() {
     [draggedPiece, dragOffset, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces]
   );
 
+  /** 그리드 좌표 감지 핵심 로직 (강화된 버전) */
+  const detectGridCell = useCallback((clientX: number, clientY: number) => {
+    // 블록이 떠 있으므로 감지 지점 보정
+    const checkX = clientX;
+    const checkY = clientY - DRAG_LIFT_PX;
+
+    // 해당 좌표의 요소 찾기
+    let el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
+    
+    // 셀 사이의 간격(Gap)이나 가장자리를 터치한 경우 인접 셀 찾기
+    if (el && !el.dataset.row) {
+      el = el.closest('.cell') as HTMLElement | null;
+    }
+
+    const row = el?.dataset.row;
+    const col = el?.dataset.col;
+    return { row, col };
+  }, []);
+
   const handlePointerDown = useCallback((e: React.PointerEvent, piece: PieceShape, offsetRow: number, offsetCol: number, isFromHold = false) => {
     if (isRotateMode && rotateCharges > 0) {
       if (isFromHold) setHeldPiece({ ...piece, shape: rotateMatrix(piece.shape) });
@@ -243,21 +256,20 @@ function App() {
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggedPiece) return;
     setPointerPos({ x: e.clientX, y: e.clientY });
-    const checkX = e.clientX;
-    const checkY = e.clientY - DRAG_LIFT_PX;
-    const el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
-    const row = el?.dataset.row;
-    const col = el?.dataset.col;
+    
+    const { row, col } = detectGridCell(e.clientX, e.clientY);
     if (row !== undefined && col !== undefined) handleDragEnter(parseInt(row), parseInt(col));
     else setPreviewCells([]);
-  }, [draggedPiece, handleDragEnter]);
+  }, [draggedPiece, handleDragEnter, detectGridCell]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!draggedPiece) return;
+    
+    // Hold 슬롯 감지 (오프셋 보정 적용 지점 기준)
     const checkX = e.clientX;
     const checkY = e.clientY - DRAG_LIFT_PX;
-    const el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
-    const holdSlot = el?.closest('.hold-slot') as HTMLElement | null;
+    const elAtPoint = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
+    const holdSlot = elAtPoint?.closest('.hold-slot') as HTMLElement | null;
     
     if (holdSlot && !swappedThisTurn && !draggedFromHold) {
       const prevHeld = heldPiece;
@@ -271,8 +283,8 @@ function App() {
       setPointerPos(null);
       return;
     }
-    const row = el?.dataset.row;
-    const col = el?.dataset.col;
+
+    const { row, col } = detectGridCell(e.clientX, e.clientY);
     if (row !== undefined && col !== undefined) handleDrop(parseInt(row), parseInt(col));
     else {
       setPreviewCells([]);
@@ -280,7 +292,7 @@ function App() {
       setDraggedFromHold(false);
     }
     setPointerPos(null);
-  }, [draggedPiece, handleDrop, heldPiece, swappedThisTurn, draggedFromHold, currentPieces, score, grid, startNewRound]);
+  }, [draggedPiece, handleDrop, heldPiece, swappedThisTurn, draggedFromHold, currentPieces, score, grid, startNewRound, detectGridCell]);
 
   const handleShuffle = useCallback(() => {
     if (shuffleCharges <= 0) return;

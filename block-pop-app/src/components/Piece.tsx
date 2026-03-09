@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import type { PieceShape } from '../types';
 
 interface PieceProps {
@@ -8,40 +8,25 @@ interface PieceProps {
 }
 
 const Piece: React.FC<PieceProps> = ({ piece, onPointerDown, disabled }) => {
-  /** shape 내 첫 번째 채워진 셀의 좌표 반환 (기본 오프셋용) */
-  const getFirstFilledCell = useCallback((): [number, number] => {
-    for (let r = 0; r < piece.shape.length; r++) {
-      for (let c = 0; c < piece.shape[r].length; c++) {
-        if (piece.shape[r][c] === 1) return [r, c];
-      }
-    }
-    return [0, 0];
-  }, [piece.shape]);
-
-  /** 피스 영역의 실제 셀 크기를 DOM에서 측정 */
   const getPieceCellSize = (target: HTMLElement) => {
     const cell = target.closest('.piece-cell') as HTMLElement | null;
     return cell ? cell.offsetWidth : 30;
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    // disabled 상태(배치 불가 등)여도 드래그(Hold 이동)는 가능하게 함
-    // 단, swappedThisTurn 같은 강제 비활성화는 App에서 처리
-    
     const rect = e.currentTarget.getBoundingClientRect();
     const cellSize = getPieceCellSize(e.target as HTMLElement);
     const gap = 2;
     const step = cellSize + gap;
     
+    // 사용자가 터치한 지점을 정확하게 오프셋으로 계산 (Snap 제거)
+    // 이를 통해 대형 블록을 어디를 잡든 손가락 위치가 유지됨
     let offsetCol = Math.floor((e.clientX - rect.left) / step);
     let offsetRow = Math.floor((e.clientY - rect.top) / step);
     
+    // 범위 제한 (Hitbox 패딩 대응)
     offsetCol = Math.max(0, Math.min(piece.shape[0].length - 1, offsetCol));
     offsetRow = Math.max(0, Math.min(piece.shape.length - 1, offsetRow));
-    
-    if (piece.shape[offsetRow][offsetCol] !== 1) {
-      [offsetRow, offsetCol] = getFirstFilledCell();
-    }
     
     onPointerDown(e, piece, offsetRow, offsetCol);
   };
@@ -50,7 +35,11 @@ const Piece: React.FC<PieceProps> = ({ piece, onPointerDown, disabled }) => {
     <div
       className={`piece ${disabled ? 'disabled' : ''}`}
       onPointerDown={handlePointerDown}
-      style={{ touchAction: 'none' }}
+      style={{ 
+        touchAction: 'none',
+        padding: '10px', 
+        margin: '-10px'
+      }}
     >
       {piece.shape.map((row, rIdx) => (
         <div key={rIdx} className="piece-row">
@@ -60,6 +49,7 @@ const Piece: React.FC<PieceProps> = ({ piece, onPointerDown, disabled }) => {
               className="piece-cell"
               style={{
                 backgroundColor: val === 1 ? piece.color : 'transparent',
+                opacity: val === 1 ? 1 : 0, 
               }}
             />
           ))}

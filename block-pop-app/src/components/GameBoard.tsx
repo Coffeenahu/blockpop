@@ -41,6 +41,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
   gridRef,
   visualEffects,
 }) => {
+  // Hold 슬롯에 있는 피스의 크기가 5칸인 경우 축소 배율 계산
+  const getHoldScale = (piece: PieceShape | null) => {
+    if (!piece) return 1;
+    const maxDim = Math.max(piece.shape.length, piece.shape[0].length);
+    return maxDim >= 5 ? 0.75 : 1;
+  };
+
   return (
     <div className="game-board-layout">
       <div className="grid-relative-container" style={{ position: 'relative' }}>
@@ -85,7 +92,10 @@ const GameBoard: React.FC<GameBoardProps> = ({
             <div className="hold-label">
               {isHoldAvailableGuide ? 'MOVE TO HOLD!' : 'HOLD'}
             </div>
-            <div className={`hold-slot ${swappedThisTurn ? 'used' : ''} ${!heldPiecePlaceable ? 'not-placeable' : ''}`}>
+            <div 
+              className={`hold-slot ${swappedThisTurn ? 'used' : ''} ${!heldPiecePlaceable ? 'not-placeable' : ''}`}
+              style={{ transform: `scale(${getHoldScale(heldPiece)})` }}
+            >
               {heldPiece && (
                 <Piece
                   piece={heldPiece}
