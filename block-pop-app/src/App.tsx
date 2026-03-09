@@ -21,21 +21,36 @@ import { useCombo } from './hooks/useCombo';
 import { useVisualEffects } from './hooks/useVisualEffects';
 import { useCellCoordinates } from './hooks/useCellCoordinates';
 
-const initialPieces = (): (PieceShape | null)[] => [
-  generateRandomPiece(0),
-  generateRandomPiece(0),
-  generateRandomPiece(0),
-];
+const initialPieces = (grid: GridData, score: number): (PieceShape | null)[] => {
+  let pieces: PieceShape[] = [];
+  let isAnyPlaceable = false;
+  
+  // 적어도 하나는 배치 가능한 블록이 나올 때까지 반복 (무한 루프 방지를 위해 최대 10회 시도)
+  let attempts = 0;
+  while (!isAnyPlaceable && attempts < 10) {
+    pieces = [generateRandomPiece(score), generateRandomPiece(score), generateRandomPiece(score)];
+    isAnyPlaceable = pieces.some(p => {
+      // 그리드 전체를 돌며 배치 가능한 곳이 있는지 확인
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (canPlacePiece(grid, p, r, c)) return true;
+        }
+      }
+      return false;
+    });
+    attempts++;
+  }
+  return pieces;
+};
 
 function App() {
   const [grid, setGrid] = useState<GridData>(createEmptyGrid());
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [currentPieces, setCurrentPieces] = useState<(PieceShape | null)[]>(initialPieces);
+  const [currentPieces, setCurrentPieces] = useState<(PieceShape | null)[]>([]);
   const [heldPiece, setHeldPiece] = useState<PieceShape | null>(null);
   const [swappedThisTurn, setSwappedThisTurn] = useState(false);
   
-  // 전략적 충전 상태 (2000점마다 리필, 최대 3회 스택)
   const [rotateCharges, setRotateCharges] = useState(3);
   const [shuffleCharges, setShuffleCharges] = useState(1);
   const [lastChargeScore, setLastChargeScore] = useState(0);
@@ -52,6 +67,11 @@ function App() {
   const { visualEffects, addEffect } = useVisualEffects();
   const { gridRef, getCellCoordinates, getPieceCellSize } = useCellCoordinates();
 
+  // 초기 피스 생성
+  useEffect(() => {
+    setCurrentPieces(initialPieces(grid, 0));
+  }, []);
+
   useEffect(() => {
     const savedBest = localStorage.getItem('block-pop-best-score');
     if (savedBest) setBestScore(parseInt(savedBest, 10));
@@ -64,24 +84,20 @@ function App() {
     }
   }, [score, bestScore]);
 
-  // 전략적 도구 충전 로직 (2000점마다 Rotate, 1000점마다 Shuffle)
+  // 전략적 도구 충전 로직 (Rotate/Shuffle 모두 2000점마다)
   useEffect(() => {
     if (score - lastChargeScore >= 2000) {
       setRotateCharges(prev => Math.min(prev + 1, 3));
       setLastChargeScore(Math.floor(score / 2000) * 2000);
     }
-    if (score - lastShuffleScore >= 1000) {
+    if (score - lastShuffleScore >= 2000) {
       setShuffleCharges(prev => Math.min(prev + 1, 2));
-      setLastShuffleScore(Math.floor(score / 1000) * 1000);
+      setLastShuffleScore(Math.floor(score / 2000) * 2000);
     }
   }, [score, lastChargeScore, lastShuffleScore]);
 
-  const startNewRound = useCallback((currentScore: number) => {
-    setCurrentPieces([
-      generateRandomPiece(currentScore),
-      generateRandomPiece(currentScore),
-      generateRandomPiece(currentScore),
-    ]);
+  const startNewRound = useCallback((currentScore: number, currentGrid: GridData) => {
+    setCurrentPieces(initialPieces(currentGrid, currentScore));
   }, []);
 
   const isAnimating = grid.some((row) => row.some((cell) => cell.pop));
@@ -189,18 +205,18 @@ function App() {
 
         if (draggedFromHold) setHeldPiece(null);
         else {
-          setCurrentPieces((prev) => {
-            const remaining = prev.map((p) => (p?.id === draggedPiece.id ? null : p));
-            if (remaining.every((p) => p === null)) setTimeout(() => startNewRound(latestScore), 0);
-            return remaining;
-          });
+          const remaining = currentPieces.map((p) => (p?.id === draggedPiece.id ? null : p));
+          setCurrentPieces(remaining);
+          if (remaining.every((p) => p === null)) {
+            setTimeout(() => startNewRound(latestScore, newGrid), 0);
+          }
         }
         setSwappedThisTurn(false);
       }
       setDraggedPiece(null);
       setDraggedFromHold(false);
     },
-    [draggedPiece, dragOffset, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold]
+    [draggedPiece, dragOffset, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces]
   );
 
   const handlePointerDown = useCallback((e: React.PointerEvent, piece: PieceShape, offsetRow: number, offsetCol: number, isFromHold = false) => {
@@ -230,7 +246,6 @@ function App() {
     const checkY = e.clientY - DRAG_LIFT_PX;
     const el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
     const holdSlot = el?.closest('.hold-slot') as HTMLElement | null;
-    
     if (holdSlot && !swappedThisTurn && !draggedFromHold) {
       const prevHeld = heldPiece;
       setHeldPiece(draggedPiece);
@@ -265,12 +280,13 @@ function App() {
 
   const handleShuffle = useCallback(() => {
     if (shuffleCharges <= 0) return;
-    setCurrentPieces([generateRandomPiece(score), generateRandomPiece(score), generateRandomPiece(score)]);
+    setCurrentPieces(initialPieces(grid, score));
     setShuffleCharges(prev => prev - 1);
-  }, [shuffleCharges, score]);
+  }, [shuffleCharges, score, grid]);
 
   const restartGame = useCallback(() => {
-    setGrid(createEmptyGrid());
+    const newGrid = createEmptyGrid();
+    setGrid(newGrid);
     setScore(0);
     resetCombo();
     setGameOver(false);
@@ -280,8 +296,8 @@ function App() {
     setShuffleCharges(1);
     setLastChargeScore(0);
     setLastShuffleScore(0);
-    startNewRound(0);
-  }, [startNewRound, resetCombo]);
+    setCurrentPieces(initialPieces(newGrid, 0));
+  }, [resetCombo]);
 
   const pieceCellSize = getPieceCellSize();
   const step = pieceCellSize + 2;
@@ -290,7 +306,6 @@ function App() {
     currentPieces.map((piece) => {
       if (!piece) return false;
       const tempGrid = grid.map(row => row.map(cell => ({ ...cell, filled: cell.filled && !cell.pop })));
-      // true: 배치 불가 (흐리게 표시), false: 배치 가능 (원래 색상)
       return !tempGrid.some((_, r) => tempGrid[0].some((_, c) => canPlacePiece(tempGrid, piece, r, c)));
     }),
     [grid, currentPieces]
