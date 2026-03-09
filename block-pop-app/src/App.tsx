@@ -7,6 +7,7 @@ import {
   PARTICLES_PER_CELL,
   POP_ANIMATION_MS,
   DRAG_LIFT_PX,
+  GRID_SIZE,
 } from './constants';
 import {
   createEmptyGrid,
@@ -29,8 +30,8 @@ const initialPieces = (grid: GridData, score: number): (PieceShape | null)[] => 
     pieces = [generateRandomPiece(score), generateRandomPiece(score), generateRandomPiece(score)];
     isAnyPlaceable = pieces.some(p => {
       if (!p) return false;
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
           if (canPlacePiece(grid, p, r, c)) return true;
         }
       }
@@ -120,12 +121,42 @@ function App() {
     return false;
   }, [grid, currentPieces, heldPiece, isAnimating, gameOver, isHoldAvailableGuide]);
 
+  /** 지능형 유연 흡착 (Flex-Snapping): 주변 1칸 이내의 배치 가능한 최적의 위치를 찾음 */
+  const findBestPlacement = useCallback((baseRow: number, baseCol: number, piece: PieceShape): [number, number] | null => {
+    const targetRow = baseRow - dragOffset[0];
+    const targetCol = baseCol - dragOffset[1];
+
+    // 1순위: 현재 위치가 가능하면 바로 반환
+    if (canPlacePiece(grid, piece, targetRow, targetCol)) {
+      return [targetRow, targetCol];
+    }
+
+    // 2순위: 주변 3x3 영역 검색 (자석 효과)
+    // 검색 순서: 상하좌우 -> 대각선
+    const searchOffsets = [
+      [0, 1], [0, -1], [1, 0], [-1, 0], // 상하좌우
+      [1, 1], [1, -1], [-1, 1], [-1, -1] // 대각선
+    ];
+
+    for (const [dr, dc] of searchOffsets) {
+      const nr = targetRow + dr;
+      const nc = targetCol + dc;
+      if (canPlacePiece(grid, piece, nr, nc)) {
+        return [nr, nc];
+      }
+    }
+
+    return null;
+  }, [grid, dragOffset]);
+
   const handleDragEnter = useCallback(
     (row: number, col: number) => {
       if (!draggedPiece) return;
-      const targetRow = row - dragOffset[0];
-      const targetCol = col - dragOffset[1];
-      if (canPlacePiece(grid, draggedPiece, targetRow, targetCol)) {
+      
+      const bestPos = findBestPlacement(row, col, draggedPiece);
+      
+      if (bestPos) {
+        const [targetRow, targetCol] = bestPos;
         const cells: [number, number][] = [];
         draggedPiece.shape.forEach((rShape, r) => {
           rShape.forEach((val, c) => {
@@ -133,107 +164,114 @@ function App() {
           });
         });
         setPreviewCells(cells);
-      } else setPreviewCells([]);
+      } else {
+        setPreviewCells([]);
+      }
     },
-    [draggedPiece, dragOffset, grid]
+    [draggedPiece, findBestPlacement]
   );
 
   const handleDrop = useCallback(
     (row: number, col: number) => {
       setPreviewCells([]);
       if (!draggedPiece) return;
-      const targetRow = row - dragOffset[0];
-      const targetCol = col - dragOffset[1];
+      
+      const bestPos = findBestPlacement(row, col, draggedPiece);
+      if (!bestPos) {
+        setDraggedPiece(null);
+        return;
+      }
 
-      if (canPlacePiece(grid, draggedPiece, targetRow, targetCol)) {
-        const newGrid = grid.map((r) => r.map((c) => ({ ...c })));
-        let latestScore = score;
-        const placementPoints = draggedPiece.shape.flat().filter((v) => v === 1).length * PLACEMENT_POINTS_PER_CELL;
+      const [targetRow, targetCol] = bestPos;
+      const newGrid = grid.map((r) => r.map((c) => ({ ...c })));
+      let latestScore = score;
+      const placementPoints = draggedPiece.shape.flat().filter((v) => v === 1).length * PLACEMENT_POINTS_PER_CELL;
 
-        draggedPiece.shape.forEach((pieceRow, r) => {
-          pieceRow.forEach((val, c) => {
-            if (val === 1) {
-              newGrid[targetRow + r][targetCol + c] = { filled: true, color: draggedPiece.color };
-            }
-          });
+      draggedPiece.shape.forEach((pieceRow, r) => {
+        pieceRow.forEach((val, c) => {
+          if (val === 1) {
+            newGrid[targetRow + r][targetCol + c] = { filled: true, color: draggedPiece.color };
+          }
+        });
+      });
+
+      const { newGrid: gridWithPop, linesCleared, popCells } = checkLines(newGrid);
+
+      if (linesCleared > 0) {
+        incrementCombo();
+        const newComboCount = comboCount + 1;
+        const baseLineScore = Math.pow(linesCleared, 2) * LINE_CLEAR_BASE_POINTS;
+        const comboBonus = Math.floor(baseLineScore * getComboMultiplier(newComboCount));
+
+        setGrid(gridWithPop);
+        latestScore = score + placementPoints + comboBonus;
+        setScore(latestScore);
+
+        const avgX = popCells.reduce((sum, [, c]) => sum + getCellCoordinates(0, c).x, 0) / popCells.length;
+        const avgY = popCells.reduce((sum, [r]) => sum + getCellCoordinates(r, 0).y, 0) / popCells.length;
+        
+        let popupText = `+${comboBonus}`;
+        if (linesCleared === 2) popupText = `DOUBLE! ${popupText}`;
+        if (linesCleared === 3) popupText = `TRIPLE! ${popupText}`;
+        if (linesCleared >= 4) popupText = `MEGA! ${popupText}`;
+        
+        addEffect({ x: avgX, y: avgY, text: popupText, type: 'score' });
+
+        popCells.forEach(([r, c]) => {
+          const coords = getCellCoordinates(r, c);
+          const cellColor = newGrid[r][c].color || '#fff';
+          for (let i = 0; i < PARTICLES_PER_CELL; i++) {
+            addEffect({ x: coords.x, y: coords.y, color: cellColor, tx: `${(Math.random() - 0.5) * 150}px`, ty: `${(Math.random() - 0.5) * 150}px`, type: 'particle' });
+          }
         });
 
-        const { newGrid: gridWithPop, linesCleared, popCells } = checkLines(newGrid);
-
-        if (linesCleared > 0) {
-          incrementCombo();
-          const newComboCount = comboCount + 1;
-          const baseLineScore = Math.pow(linesCleared, 2) * LINE_CLEAR_BASE_POINTS;
-          const comboBonus = Math.floor(baseLineScore * getComboMultiplier(newComboCount));
-
-          setGrid(gridWithPop);
-          latestScore = score + placementPoints + comboBonus;
-          setScore(latestScore);
-
-          const avgX = popCells.reduce((sum, [, c]) => sum + getCellCoordinates(0, c).x, 0) / popCells.length;
-          const avgY = popCells.reduce((sum, [r]) => sum + getCellCoordinates(r, 0).y, 0) / popCells.length;
-          
-          let popupText = `+${comboBonus}`;
-          if (linesCleared === 2) popupText = `DOUBLE! ${popupText}`;
-          if (linesCleared === 3) popupText = `TRIPLE! ${popupText}`;
-          if (linesCleared >= 4) popupText = `MEGA! ${popupText}`;
-          
-          addEffect({ x: avgX, y: avgY, text: popupText, type: 'score' });
-
-          popCells.forEach(([r, c]) => {
-            const coords = getCellCoordinates(r, c);
-            const cellColor = newGrid[r][c].color || '#fff';
-            for (let i = 0; i < PARTICLES_PER_CELL; i++) {
-              addEffect({ x: coords.x, y: coords.y, color: cellColor, tx: `${(Math.random() - 0.5) * 150}px`, ty: `${(Math.random() - 0.5) * 150}px`, type: 'particle' });
-            }
+        setTimeout(() => {
+          setGrid((currentGrid) => {
+            const finalGrid = currentGrid.map((r) => r.map((c) => ({ ...c })));
+            popCells.forEach(([r, c]) => { finalGrid[r][c] = { filled: false }; });
+            return finalGrid;
           });
-
-          setTimeout(() => {
-            setGrid((currentGrid) => {
-              const finalGrid = currentGrid.map((r) => r.map((c) => ({ ...c })));
-              popCells.forEach(([r, c]) => { finalGrid[r][c] = { filled: false }; });
-              return finalGrid;
-            });
-          }, POP_ANIMATION_MS);
-        } else {
-          if (comboCount > 0) decrementGrace();
-          setGrid(newGrid);
-          latestScore = score + placementPoints;
-          setScore(latestScore);
-        }
-
-        if (draggedFromHold) setHeldPiece(null);
-        else {
-          const remaining = currentPieces.map((p) => (p?.id === draggedPiece.id ? null : p));
-          setCurrentPieces(remaining);
-          if (remaining.every((p) => p === null)) setTimeout(() => startNewRound(latestScore, newGrid), 0);
-        }
-        setSwappedThisTurn(false);
+        }, POP_ANIMATION_MS);
+      } else {
+        if (comboCount > 0) decrementGrace();
+        setGrid(newGrid);
+        latestScore = score + placementPoints;
+        setScore(latestScore);
       }
+
+      if (draggedFromHold) setHeldPiece(null);
+      else {
+        const remaining = currentPieces.map((p) => (p?.id === draggedPiece.id ? null : p));
+        setCurrentPieces(remaining);
+        if (remaining.every((p) => p === null)) setTimeout(() => startNewRound(latestScore, newGrid), 0);
+      }
+      setSwappedThisTurn(false);
       setDraggedPiece(null);
       setDraggedFromHold(false);
     },
-    [draggedPiece, dragOffset, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces]
+    [draggedPiece, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces, findBestPlacement]
   );
 
-  /** 그리드 좌표 감지 핵심 로직 (강화된 버전) */
   const detectGridCell = useCallback((clientX: number, clientY: number) => {
-    // 블록이 떠 있으므로 감지 지점 보정
+    if (!gridRef.current) return { row: undefined, col: undefined };
+    const rect = gridRef.current.getBoundingClientRect();
     const checkX = clientX;
     const checkY = clientY - DRAG_LIFT_PX;
-
-    // 해당 좌표의 요소 찾기
-    let el = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
-    
-    // 셀 사이의 간격(Gap)이나 가장자리를 터치한 경우 인접 셀 찾기
-    if (el && !el.dataset.row) {
-      el = el.closest('.cell') as HTMLElement | null;
+    const margin = 20;
+    if (checkX < rect.left - margin || checkX > rect.right + margin || checkY < rect.top - margin || checkY > rect.bottom + margin) {
+      return { row: undefined, col: undefined };
     }
-
-    const row = el?.dataset.row;
-    const col = el?.dataset.col;
-    return { row, col };
-  }, []);
+    const relativeX = checkX - rect.left;
+    const relativeY = checkY - rect.top;
+    const gridStyle = window.getComputedStyle(gridRef.current);
+    const cellSize = parseFloat(gridStyle.getPropertyValue('--cell-size')) || (rect.width / GRID_SIZE);
+    const step = cellSize + 4;
+    let col = Math.floor(relativeX / step);
+    let row = Math.floor(relativeY / step);
+    col = Math.max(0, Math.min(GRID_SIZE - 1, col));
+    row = Math.max(0, Math.min(GRID_SIZE - 1, row));
+    return { row: row.toString(), col: col.toString() };
+  }, [gridRef]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent, piece: PieceShape, offsetRow: number, offsetCol: number, isFromHold = false) => {
     if (isRotateMode && rotateCharges > 0) {
@@ -243,12 +281,10 @@ function App() {
       setIsRotateMode(false);
       return;
     }
-
     setDraggedPiece(piece);
     setDragOffset([offsetRow, offsetCol]);
     setDraggedFromHold(isFromHold);
     setPointerPos({ x: e.clientX, y: e.clientY });
-    
     const container = document.querySelector('.game-container') as HTMLElement;
     if (container) container.setPointerCapture(e.pointerId);
   }, [isRotateMode, rotateCharges]);
@@ -256,7 +292,6 @@ function App() {
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggedPiece) return;
     setPointerPos({ x: e.clientX, y: e.clientY });
-    
     const { row, col } = detectGridCell(e.clientX, e.clientY);
     if (row !== undefined && col !== undefined) handleDragEnter(parseInt(row), parseInt(col));
     else setPreviewCells([]);
@@ -264,13 +299,10 @@ function App() {
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!draggedPiece) return;
-    
-    // Hold 슬롯 감지 (오프셋 보정 적용 지점 기준)
     const checkX = e.clientX;
     const checkY = e.clientY - DRAG_LIFT_PX;
     const elAtPoint = document.elementFromPoint(checkX, checkY) as HTMLElement | null;
     const holdSlot = elAtPoint?.closest('.hold-slot') as HTMLElement | null;
-    
     if (holdSlot && !swappedThisTurn && !draggedFromHold) {
       const prevHeld = heldPiece;
       setHeldPiece(draggedPiece);
@@ -283,7 +315,6 @@ function App() {
       setPointerPos(null);
       return;
     }
-
     const { row, col } = detectGridCell(e.clientX, e.clientY);
     if (row !== undefined && col !== undefined) handleDrop(parseInt(row), parseInt(col));
     else {
