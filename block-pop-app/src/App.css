@@ -1,16 +1,20 @@
 :root {
-  --cell-size: min(42px, calc((100vw - 40px) / 8), calc((100dvh - 350px) / 8));
-  --grid-total: calc(8 * var(--cell-size) + 7 * 4px + 2 * 4px);
+  /* 오버헤드: 컨테이너 패딩(10*2=20) + 그리드컨테이너 패딩(3*2=6) + 갭(7*4=28) = 54px + 여유 6px */
+  --cell-size: min(42px, calc((100vw - 60px) / 8), calc((100dvh - 320px) / 8));
+  --grid-total: calc(8 * var(--cell-size) + 7 * 4px + 2 * 3px);
   --piece-cell-size: min(20px, calc(var(--cell-size) * 0.55), calc((var(--grid-total) - 60px) / 15));
   --bg-color: #1a1a1a;
   --grid-bg: #2d2d2d;
+  --text-color: #ffffff;
+  --grid-border: #3d3d3d;
 }
 
 html, body {
   margin: 0; padding: 0; width: 100%; height: 100%; height: 100dvh;
   overflow: hidden; position: fixed; touch-action: none;
-  background-color: var(--bg-color); color: white;
+  background-color: var(--bg-color); color: var(--text-color);
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .game-container {
@@ -33,6 +37,52 @@ html, body {
 
 .game-container.rotate-mode-active {
   background-color: rgba(51, 87, 255, 0.1);
+}
+
+/* Header controls */
+.game-inner {
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.header-top-row {
+  display: flex; justify-content: space-between; align-items: center;
+  width: var(--grid-total); margin-bottom: 2px;
+}
+
+.theme-btn-group { display: flex; gap: 3px; }
+
+.theme-btn {
+  background: transparent;
+  border: 1px solid rgba(128,128,128,0.3);
+  border-radius: 5px; padding: 2px 5px;
+  font-size: 0.75rem; cursor: pointer;
+  color: var(--text-color); transition: all 0.15s;
+}
+.theme-btn.active {
+  border-color: var(--text-color);
+  background: rgba(128,128,128,0.2);
+}
+
+.mute-btn {
+  background: transparent;
+  border: 1px solid rgba(128,128,128,0.3);
+  border-radius: 5px; padding: 2px 6px;
+  font-size: 0.8rem; cursor: pointer;
+  color: var(--text-color); transition: opacity 0.15s;
+}
+.mute-btn.muted { opacity: 0.35; }
+
+/* Revive button */
+.revive-btn {
+  display: block; width: 100%; margin-top: 8px;
+  padding: 8px 16px; font-size: 0.85rem;
+  background: #FF9900; border: none; border-radius: 8px;
+  cursor: pointer; color: black; font-weight: bold;
+  animation: pulse-revive 1.5s infinite;
+}
+@keyframes pulse-revive {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,153,0,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(255,153,0,0); }
 }
 
 .score-container {
@@ -59,7 +109,7 @@ html, body {
 .combo-grace { font-size: 0.65rem; color: #aaa; }
 
 .game-board-layout {
-  display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
 
 .grid-relative-container {
@@ -77,8 +127,8 @@ html, body {
 .cell.pop { animation: pop-animation 0.4s ease-out forwards; }
 
 .bottom-controls-container {
-  display: flex; flex-direction: column; gap: 6px; width: 100%;
-  max-width: var(--grid-total); padding: 6px;
+  display: flex; flex-direction: column; gap: 6px; width: var(--grid-total);
+  padding: 6px; box-sizing: border-box;
   background: rgba(255, 255, 255, 0.05); border-radius: 10px;
 }
 

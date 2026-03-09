@@ -7,7 +7,7 @@ export const createEmptyGrid = (): GridData => {
   );
 };
 
-export const generateRandomPiece = (score: number = 0): PieceShape => {
+export const generateRandomPiece = (score: number = 0, colorOverrides?: string[]): PieceShape => {
   let weights: { simple: number; normal: number; hard: number };
 
   if (score < DIFFICULTY_THRESHOLD_NORMAL) {
@@ -40,8 +40,13 @@ export const generateRandomPiece = (score: number = 0): PieceShape => {
 
   const randomShape = finalShapes[Math.floor(Math.random() * finalShapes.length)];
 
+  const color = colorOverrides && colorOverrides.length > 0
+    ? colorOverrides[Math.floor(Math.random() * colorOverrides.length)]
+    : randomShape.color;
+
   return {
     ...randomShape,
+    color,
     id: Math.random().toString(36).substring(2, 9),
   } as PieceShape;
 };
@@ -132,6 +137,17 @@ export const isGameOver = (grid: GridData, pieces: PieceShape[]): boolean => {
     }
     return true;
   });
+};
+
+/** 그리드 하단 count행을 빈 셀로 교체 (부활 시 사용) */
+export const clearBottomRows = (grid: GridData, count: number): GridData => {
+  const newGrid = grid.map((r) => r.map((c) => ({ ...c })));
+  for (let r = GRID_SIZE - 1; r >= GRID_SIZE - count; r--) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      newGrid[r][c] = { filled: false };
+    }
+  }
+  return newGrid;
 };
 
 /** 2차원 행렬을 90도 시계 방향으로 회전 */

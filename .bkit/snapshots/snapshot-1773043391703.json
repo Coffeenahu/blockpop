@@ -1,0 +1,561 @@
+{
+  "timestamp": "2026-03-09T08:03:11.700Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-09T07:49:27.535Z",
+    "activeFeatures": [
+      "block-pop-app"
+    ],
+    "primaryFeature": "block-pop-app",
+    "features": {
+      "block-pop-app": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-08T13:27:36.526Z",
+          "lastUpdated": "2026-03-09T07:49:27.535Z"
+        },
+        "lastFile": "D:\\vscode\\block-pop\\blockpop\\block-pop-app\\src\\App.tsx"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-08T12:36:19.417Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-09T07:49:27.535Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-08T13:27:36.526Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:27:44.491Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:27:47.600Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:27:57.431Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:28:03.868Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:28:28.765Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:28:32.400Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:28:35.819Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:28:39.207Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:40:10.998Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:40:23.412Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:40:41.511Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:40:56.844Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:41:02.807Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:49:51.682Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:50:00.778Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T13:50:05.987Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:10:19.335Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:10:22.588Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:10:44.718Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:10:54.745Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:11:02.117Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:11:06.118Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:11:31.441Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:13:09.154Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:22:56.234Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:34:43.250Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:37:48.611Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:37:58.849Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:38:04.637Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:38:12.089Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:38:22.649Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:38:28.602Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T14:52:18.488Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T15:04:19.879Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T15:04:24.555Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-08T15:04:31.061Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:20:44.478Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:20:48.761Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:20:54.180Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:21:00.160Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:21:06.392Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T00:21:11.948Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:10.249Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:15.119Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:20.854Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:38.199Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:44.638Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:53:52.180Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:54:34.553Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:55:12.963Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:57:16.119Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:57:23.870Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:57:28.851Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:57:41.931Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:58:01.769Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:58:08.594Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:58:19.363Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T01:58:33.276Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T02:17:05.127Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T02:18:14.735Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T02:23:09.898Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T02:23:14.367Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T02:23:22.222Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:00.314Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:04.538Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:24.196Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:28.122Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:32.917Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:39.986Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:50.510Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:47:57.338Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:05.601Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:09.680Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:15.666Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:21.747Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:26.388Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:29.800Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:33.959Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:40.811Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:48.535Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:48:54.021Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:49:05.339Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:49:09.813Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:49:13.805Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:49:22.590Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-09T07:49:27.535Z",
+        "feature": "block-pop-app",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

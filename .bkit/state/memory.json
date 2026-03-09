@@ -17,5 +17,11 @@
       "language": "en"
     },
     "custom": {}
+  },
+  "sessionCount": 1,
+  "lastSession": {
+    "startedAt": "2026-03-09T08:04:39.244Z",
+    "platform": "claude",
+    "level": "Starter"
   }
 }

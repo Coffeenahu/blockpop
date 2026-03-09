@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import './App.css';
-import type { GridData, PieceShape } from './types';
+import type { GridData, PieceShape, ThemeId } from './types';
 import {
   PLACEMENT_POINTS_PER_CELL,
   LINE_CLEAR_BASE_POINTS,
@@ -8,6 +8,10 @@ import {
   POP_ANIMATION_MS,
   DRAG_LIFT_PX,
   GRID_SIZE,
+  REVIVE_SCORE_THRESHOLD,
+  REVIVE_SCORE_PENALTY,
+  REVIVE_CLEAR_ROWS,
+  THEMES,
 } from './constants';
 import {
   createEmptyGrid,
@@ -16,18 +20,25 @@ import {
   checkLines,
   isGameOver,
   rotateMatrix,
+  clearBottomRows,
 } from './utils';
 import GameBoard from './components/GameBoard';
 import { useCombo } from './hooks/useCombo';
 import { useVisualEffects } from './hooks/useVisualEffects';
 import { useCellCoordinates } from './hooks/useCellCoordinates';
+import { useSound } from './hooks/useSound';
+import { useTheme } from './hooks/useTheme';
 
-const initialPieces = (grid: GridData, score: number): (PieceShape | null)[] => {
+const initialPieces = (grid: GridData, score: number, blockColors?: string[]): (PieceShape | null)[] => {
   let pieces: (PieceShape | null)[] = [];
   let isAnyPlaceable = false;
   let attempts = 0;
   while (!isAnyPlaceable && attempts < 15) {
-    pieces = [generateRandomPiece(score), generateRandomPiece(score), generateRandomPiece(score)];
+    pieces = [
+      generateRandomPiece(score, blockColors),
+      generateRandomPiece(score, blockColors),
+      generateRandomPiece(score, blockColors),
+    ];
     isAnyPlaceable = pieces.some(p => {
       if (!p) return false;
       for (let r = 0; r < GRID_SIZE; r++) {
@@ -57,6 +68,7 @@ function App() {
   const [isRotateMode, setIsRotateMode] = useState(false);
 
   const [gameOver, setGameOver] = useState(false);
+  const [reviveUsed, setReviveUsed] = useState(false);
   const [draggedPiece, setDraggedPiece] = useState<PieceShape | null>(null);
   const [draggedFromHold, setDraggedFromHold] = useState(false);
   const [dragOffset, setDragOffset] = useState<[number, number]>([0, 0]);
@@ -66,8 +78,30 @@ function App() {
   const { comboCount, comboGrace, getComboColor, getComboMultiplier, incrementCombo, decrementGrace, resetCombo } = useCombo();
   const { visualEffects, addEffect } = useVisualEffects();
   const { gridRef, getCellCoordinates, getPieceCellSize } = useCellCoordinates();
+  const { isMuted, toggleMute, playSound, startBgm, stopBgm } = useSound();
+  const { themeId, setTheme, getBlockColors } = useTheme();
 
-  useEffect(() => { setCurrentPieces(initialPieces(grid, 0)); }, []);
+  // 테마 변경 시 기존 그리드/피스 색상을 새 팔레트로 리맵
+  const prevThemeIdRef = useRef<ThemeId>(themeId);
+  useEffect(() => {
+    const prevId = prevThemeIdRef.current;
+    prevThemeIdRef.current = themeId;
+    if (prevId === themeId) return;
+    const prevColors = THEMES.find((t) => t.id === prevId)?.blockColors ?? [];
+    const newColors = THEMES.find((t) => t.id === themeId)?.blockColors ?? [];
+    if (!prevColors.length || !newColors.length) return;
+    const remap = (color: string) => {
+      const idx = prevColors.indexOf(color);
+      return idx >= 0 ? newColors[idx % newColors.length] : color;
+    };
+    setGrid((prev) => prev.map((row) => row.map((cell) =>
+      cell.filled && cell.color ? { ...cell, color: remap(cell.color) } : cell
+    )));
+    setCurrentPieces((prev) => prev.map((p) => p ? { ...p, color: remap(p.color) } : p));
+    setHeldPiece((prev) => prev ? { ...prev, color: remap(prev.color) } : prev);
+  }, [themeId]);
+
+  useEffect(() => { setCurrentPieces(initialPieces(grid, 0, getBlockColors())); }, []);
 
   useEffect(() => {
     const savedBest = localStorage.getItem('block-pop-best-score');
@@ -93,8 +127,8 @@ function App() {
   }, [score, lastChargeScore, lastShuffleScore]);
 
   const startNewRound = useCallback((currentScore: number, currentGrid: GridData) => {
-    setCurrentPieces(initialPieces(currentGrid, currentScore));
-  }, []);
+    setCurrentPieces(initialPieces(currentGrid, currentScore, getBlockColors()));
+  }, [getBlockColors]);
 
   const isAnimating = grid.some((row) => row.some((cell) => cell.pop));
 
@@ -202,6 +236,7 @@ function App() {
         const newComboCount = comboCount + 1;
         const baseLineScore = Math.pow(linesCleared, 2) * LINE_CLEAR_BASE_POINTS;
         const comboBonus = Math.floor(baseLineScore * getComboMultiplier(newComboCount));
+        playSound(newComboCount >= 2 ? 'combo' : 'clear');
 
         setGrid(gridWithPop);
         latestScore = score + placementPoints + comboBonus;
@@ -237,6 +272,7 @@ function App() {
         setGrid(newGrid);
         latestScore = score + placementPoints;
         setScore(latestScore);
+        playSound('place');
       }
 
       if (draggedFromHold) setHeldPiece(null);
@@ -249,7 +285,7 @@ function App() {
       setDraggedPiece(null);
       setDraggedFromHold(false);
     },
-    [draggedPiece, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces, findBestPlacement]
+    [draggedPiece, grid, startNewRound, comboCount, incrementCombo, decrementGrace, getComboMultiplier, score, addEffect, getCellCoordinates, draggedFromHold, currentPieces, findBestPlacement, playSound]
   );
 
   const detectGridCell = useCallback((clientX: number, clientY: number) => {
@@ -331,12 +367,37 @@ function App() {
     setShuffleCharges(prev => prev - 1);
   }, [shuffleCharges, score, grid]);
 
+  // 게임오버 사운드 (최초 1회)
+  const gameOverSoundFired = useRef(false);
+  useEffect(() => {
+    if (computedGameOver && !gameOverSoundFired.current) {
+      gameOverSoundFired.current = true;
+      playSound('gameover');
+      stopBgm();
+    }
+    if (!computedGameOver) {
+      gameOverSoundFired.current = false;
+    }
+  }, [computedGameOver, playSound, stopBgm]);
+
+  const canRevive = !reviveUsed && score >= bestScore * REVIVE_SCORE_THRESHOLD && bestScore > 0;
+
+  const handleRevive = useCallback(() => {
+    const newScore = Math.floor(score * REVIVE_SCORE_PENALTY);
+    setScore(newScore);
+    setGrid((prev) => clearBottomRows(prev, REVIVE_CLEAR_ROWS));
+    setReviveUsed(true);
+    setGameOver(false);
+    startBgm();
+  }, [score, startBgm]);
+
   const restartGame = useCallback(() => {
     const newGrid = createEmptyGrid();
     setGrid(newGrid);
     setScore(0);
     resetCombo();
     setGameOver(false);
+    setReviveUsed(false);
     setHeldPiece(null);
     setSwappedThisTurn(false);
     setRotateCharges(3);
@@ -344,8 +405,9 @@ function App() {
     setLastChargeScore(0);
     setLastShuffleScore(0);
     setIsRotateMode(false);
-    setCurrentPieces(initialPieces(newGrid, 0));
-  }, [resetCombo]);
+    setCurrentPieces(initialPieces(newGrid, 0, getBlockColors()));
+    startBgm();
+  }, [resetCombo, getBlockColors, startBgm]);
 
   const pieceCellSize = getPieceCellSize();
   const step = pieceCellSize + 2;
@@ -372,7 +434,25 @@ function App() {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
+      <div className="game-inner">
       <div className="header">
+        <div className="header-top-row">
+          <div className="theme-btn-group">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                className={`theme-btn ${themeId === t.id ? 'active' : ''}`}
+                onClick={() => setTheme(t.id)}
+                title={t.id}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button className={`mute-btn ${isMuted ? 'muted' : ''}`} onClick={toggleMute}>
+            {isMuted ? '🔇' : '🔊'}
+          </button>
+        </div>
         <div className="score-container">
           <div className="score">Score: {score}</div>
           <div className="best-score">Best: {bestScore}</div>
@@ -407,6 +487,7 @@ function App() {
           visualEffects={visualEffects}
         />
       </div>
+      </div>
 
       {draggedPiece && pointerPos && (
         <div
@@ -430,6 +511,11 @@ function App() {
         <div className="game-over">
           <h2>GAME OVER</h2>
           <p>Final Score: {score}</p>
+          {canRevive && (
+            <button className="revive-btn" onClick={handleRevive}>
+              💀 REVIVE (-30%)
+            </button>
+          )}
           <button className="restart-btn" onClick={restartGame}>Try Again</button>
         </div>
       )}
