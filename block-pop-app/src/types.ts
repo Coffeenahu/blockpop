@@ -13,7 +13,6 @@ export interface PieceShape {
   difficulty: 'simple' | 'normal' | 'hard';
 }
 
-export type ThemeId = 'dark' | 'light' | 'neon' | 'pastel';
 
 export interface VisualEffect {
   id: string;

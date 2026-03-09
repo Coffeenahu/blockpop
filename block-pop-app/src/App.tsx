@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import './App.css';
-import type { GridData, PieceShape, ThemeId } from './types';
+import type { GridData, PieceShape } from './types';
 import {
   PLACEMENT_POINTS_PER_CELL,
   LINE_CLEAR_BASE_POINTS,
@@ -11,7 +11,6 @@ import {
   REVIVE_SCORE_THRESHOLD,
   REVIVE_SCORE_PENALTY,
   REVIVE_CLEAR_ROWS,
-  THEMES,
 } from './constants';
 import {
   createEmptyGrid,
@@ -27,17 +26,16 @@ import { useCombo } from './hooks/useCombo';
 import { useVisualEffects } from './hooks/useVisualEffects';
 import { useCellCoordinates } from './hooks/useCellCoordinates';
 import { useSound } from './hooks/useSound';
-import { useTheme } from './hooks/useTheme';
 
-const initialPieces = (grid: GridData, score: number, blockColors?: string[]): (PieceShape | null)[] => {
+const initialPieces = (grid: GridData, score: number): (PieceShape | null)[] => {
   let pieces: (PieceShape | null)[] = [];
   let isAnyPlaceable = false;
   let attempts = 0;
   while (!isAnyPlaceable && attempts < 15) {
     pieces = [
-      generateRandomPiece(score, blockColors),
-      generateRandomPiece(score, blockColors),
-      generateRandomPiece(score, blockColors),
+      generateRandomPiece(score),
+      generateRandomPiece(score),
+      generateRandomPiece(score),
     ];
     isAnyPlaceable = pieces.some(p => {
       if (!p) return false;
@@ -79,29 +77,8 @@ function App() {
   const { visualEffects, addEffect } = useVisualEffects();
   const { gridRef, getCellCoordinates, getPieceCellSize } = useCellCoordinates();
   const { isMuted, toggleMute, playSound, startBgm, stopBgm } = useSound();
-  const { themeId, setTheme, getBlockColors } = useTheme();
 
-  // 테마 변경 시 기존 그리드/피스 색상을 새 팔레트로 리맵
-  const prevThemeIdRef = useRef<ThemeId>(themeId);
-  useEffect(() => {
-    const prevId = prevThemeIdRef.current;
-    prevThemeIdRef.current = themeId;
-    if (prevId === themeId) return;
-    const prevColors = THEMES.find((t) => t.id === prevId)?.blockColors ?? [];
-    const newColors = THEMES.find((t) => t.id === themeId)?.blockColors ?? [];
-    if (!prevColors.length || !newColors.length) return;
-    const remap = (color: string) => {
-      const idx = prevColors.indexOf(color);
-      return idx >= 0 ? newColors[idx % newColors.length] : color;
-    };
-    setGrid((prev) => prev.map((row) => row.map((cell) =>
-      cell.filled && cell.color ? { ...cell, color: remap(cell.color) } : cell
-    )));
-    setCurrentPieces((prev) => prev.map((p) => p ? { ...p, color: remap(p.color) } : p));
-    setHeldPiece((prev) => prev ? { ...prev, color: remap(prev.color) } : prev);
-  }, [themeId]);
-
-  useEffect(() => { setCurrentPieces(initialPieces(grid, 0, getBlockColors())); }, []);
+  useEffect(() => { setCurrentPieces(initialPieces(grid, 0)); }, []);
 
   useEffect(() => {
     const savedBest = localStorage.getItem('block-pop-best-score');
@@ -116,19 +93,19 @@ function App() {
   }, [score, bestScore]);
 
   useEffect(() => {
-    if (score - lastChargeScore >= 2000) {
+    if (score - lastChargeScore >= 5000) {
       setRotateCharges(prev => Math.min(prev + 1, 3));
-      setLastChargeScore(Math.floor(score / 2000) * 2000);
+      setLastChargeScore(Math.floor(score / 5000) * 5000);
     }
-    if (score - lastShuffleScore >= 2000) {
-      setShuffleCharges(prev => Math.min(prev + 1, 2));
-      setLastShuffleScore(Math.floor(score / 2000) * 2000);
+    if (score - lastShuffleScore >= 10000) {
+      setShuffleCharges(prev => Math.min(prev + 1, 1));
+      setLastShuffleScore(Math.floor(score / 10000) * 10000);
     }
   }, [score, lastChargeScore, lastShuffleScore]);
 
   const startNewRound = useCallback((currentScore: number, currentGrid: GridData) => {
-    setCurrentPieces(initialPieces(currentGrid, currentScore, getBlockColors()));
-  }, [getBlockColors]);
+    setCurrentPieces(initialPieces(currentGrid, currentScore));
+  }, []);
 
   const isAnimating = grid.some((row) => row.some((cell) => cell.pop));
 
@@ -405,9 +382,9 @@ function App() {
     setLastChargeScore(0);
     setLastShuffleScore(0);
     setIsRotateMode(false);
-    setCurrentPieces(initialPieces(newGrid, 0, getBlockColors()));
+    setCurrentPieces(initialPieces(newGrid, 0));
     startBgm();
-  }, [resetCombo, getBlockColors, startBgm]);
+  }, [resetCombo, startBgm]);
 
   const pieceCellSize = getPieceCellSize();
   const step = pieceCellSize + 2;
@@ -437,18 +414,6 @@ function App() {
       <div className="game-inner">
       <div className="header">
         <div className="header-top-row">
-          <div className="theme-btn-group">
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                className={`theme-btn ${themeId === t.id ? 'active' : ''}`}
-                onClick={() => setTheme(t.id)}
-                title={t.id}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
           <button className={`mute-btn ${isMuted ? 'muted' : ''}`} onClick={toggleMute}>
             {isMuted ? '🔇' : '🔊'}
           </button>

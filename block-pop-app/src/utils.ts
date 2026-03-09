@@ -7,7 +7,7 @@ export const createEmptyGrid = (): GridData => {
   );
 };
 
-export const generateRandomPiece = (score: number = 0, colorOverrides?: string[]): PieceShape => {
+export const generateRandomPiece = (score: number = 0): PieceShape => {
   let weights: { simple: number; normal: number; hard: number };
 
   if (score < DIFFICULTY_THRESHOLD_NORMAL) {
@@ -40,13 +40,8 @@ export const generateRandomPiece = (score: number = 0, colorOverrides?: string[]
 
   const randomShape = finalShapes[Math.floor(Math.random() * finalShapes.length)];
 
-  const color = colorOverrides && colorOverrides.length > 0
-    ? colorOverrides[Math.floor(Math.random() * colorOverrides.length)]
-    : randomShape.color;
-
   return {
     ...randomShape,
-    color,
     id: Math.random().toString(36).substring(2, 9),
   } as PieceShape;
 };

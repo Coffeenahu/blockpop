@@ -45,23 +45,10 @@ html, body {
 }
 
 .header-top-row {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: flex-end; align-items: center;
   width: var(--grid-total); margin-bottom: 2px;
 }
 
-.theme-btn-group { display: flex; gap: 3px; }
-
-.theme-btn {
-  background: transparent;
-  border: 1px solid rgba(128,128,128,0.3);
-  border-radius: 5px; padding: 2px 5px;
-  font-size: 0.75rem; cursor: pointer;
-  color: var(--text-color); transition: all 0.15s;
-}
-.theme-btn.active {
-  border-color: var(--text-color);
-  background: rgba(128,128,128,0.2);
-}
 
 .mute-btn {
   background: transparent;
@@ -234,6 +221,16 @@ html, body {
 
 @keyframes pop-animation { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
 
-@media (min-width: 800px) {
-  .game-board-layout { flex-direction: row; align-items: flex-start; justify-content: center; gap: 30px; }
+.particle {
+  position: absolute;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-fly 0.9s ease-out forwards;
 }
+
+@keyframes particle-fly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
